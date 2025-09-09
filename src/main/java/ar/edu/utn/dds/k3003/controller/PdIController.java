@@ -49,9 +49,4 @@ public class PdIController {
     public ResponseEntity<PdIDTO> procesarNuevoPdi(@RequestBody PdIDTO pdi) {
         return ResponseEntity.ok(fachadaProcesadorPdI.procesar(pdi));
     }
-    // GET / -> mensaje en la página
-    @GetMapping("/")
-    public String home() {
-        return "¡La app está corriendo!";
-}
 }
