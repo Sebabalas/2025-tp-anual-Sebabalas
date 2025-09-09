@@ -85,13 +85,6 @@
       <optional>true</optional>
     </dependency>
 
-    <!-- H2 (base de datos en memoria para test) -->
-    <dependency>
-      <groupId>com.h2database</groupId>
-      <artifactId>h2</artifactId>
-      <scope>runtime</scope>
-    </dependency>
-
     <dependency>
       <groupId>org.postgresql</groupId>
       <artifactId>postgresql</artifactId>
