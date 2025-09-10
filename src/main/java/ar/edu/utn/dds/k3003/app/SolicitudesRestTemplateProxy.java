@@ -25,7 +25,7 @@ public class SolicitudesRestTemplateProxy implements FachadaSolicitudes {
     private final String base; // debe terminar en "/"
 
     public SolicitudesRestTemplateProxy(RestTemplate rt,
-                                        @Value("${URL_SOLICITUDES:http://localhost:8080/}") String base) {
+                                        @Value("${URL_SOLICITUDES}") String base) {
         this.rt = rt;
         this.base = base.endsWith("/") ? base : base + "/";
     }

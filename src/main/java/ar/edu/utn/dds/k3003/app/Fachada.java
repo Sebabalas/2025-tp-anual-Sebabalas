@@ -40,11 +40,11 @@ public class Fachada implements FachadaProcesadorPdINueva {
     public PdIDTO procesar(PdIDTO dto) throws IllegalStateException {
         log.info("Procesando PdI para hechoId={}", dto.hechoId());
 
-        /*if (!fachadaSolicitudes.estaActivo(dto.hechoId())) {
+        if (!fachadaSolicitudes.estaActivo(dto.hechoId())) {
             log.warn("El hecho no está activo: {}", dto.hechoId());
             throw new IllegalStateException("El hecho no está activo");
         }
-            */
+    
 
         PdI nuevoPdI = dtoAPDI(dto);
         Optional<PdI> PdIYaProcesado =
