@@ -36,11 +36,13 @@ public class PdI {
             String descripcion,
             String lugar,
             LocalDateTime momento,
-            String contenido) {
+            String contenido,
+            List<String> etiquetas) {
         this.hechoId = hechoId;
         this.descripcion = descripcion;
         this.lugar = lugar;
         this.momento = momento;
         this.contenido = contenido;
+        this.etiquetas = etiquetas;
     }
 }

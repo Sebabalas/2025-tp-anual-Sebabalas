@@ -109,7 +109,8 @@ public class Fachada implements FachadaProcesadorPdINueva {
                         pdiDTO.descripcion(),
                         pdiDTO.lugar(),
                         pdiDTO.momento(),
-                        pdiDTO.contenido());
+                        pdiDTO.contenido(),
+                        pdiDTO.etiquetas());
         return nuevoPdI;
     }
     private PdIDTO mapearADTO(PdI pdi) {
