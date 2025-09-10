@@ -26,7 +26,6 @@ public class Fachada implements FachadaProcesadorPdINueva {
 
     private final PdIRepository pdIRepository;
     private FachadaSolicitudes fachadaSolicitudes;
-    private final AtomicLong generadorId = new AtomicLong(1);
 
     @Autowired
     public Fachada(PdIRepository pdiRepository) {
@@ -59,19 +58,12 @@ public class Fachada implements FachadaProcesadorPdINueva {
 
         if (PdIYaProcesado.isPresent()) {
             return mapearADTO(PdIYaProcesado.get());
-        }
+        } 
+        PdI guardado = pdIRepository.save(nuevoPdI);
 
-        nuevoPdI.setId(generadorId.getAndIncrement()); 
-        pdIRepository.save(nuevoPdI);
+        log.info("Se guardó el PdI con ID {} en hechoId: {}", guardado.getId(), guardado.getHechoId());
 
-        System.out.println(
-                "Se guardó el PdI con ID "
-                        + nuevoPdI.getId()
-                        + " en hechoId: "
-                        + nuevoPdI.getHechoId());
-
-        PdIDTO pdiDTOAEnviar = mapearADTO(nuevoPdI);
-        return pdiDTOAEnviar;
+        return mapearADTO(guardado);
     }
 
     @Override
