@@ -2,7 +2,7 @@ package ar.edu.utn.dds.k3003.controller;
 
 
 import ar.edu.utn.dds.k3003.facades.FachadaProcesadorPdINueva;
-import ar.edu.utn.dds.k3003.facades.dtos.PdIDTO;
+import ar.edu.utn.dds.k3003.dtos.PdiDTONuevo;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -25,7 +25,7 @@ public class PdIController {
     // GET /pdis?hecho={hechoId}
     // GET /pdis
     @GetMapping
-    public ResponseEntity<List<PdIDTO>> listarPdisPorHecho(
+    public ResponseEntity<List<PdiDTONuevo>> listarPdisPorHecho(
             @RequestParam(required = false) String hecho) {
         if (hecho != null) {
             // GET /pdis?hecho={hechoId}
@@ -39,14 +39,14 @@ public class PdIController {
 
     // GET /pdis/{id}
     @GetMapping("/{id}")
-    public ResponseEntity<PdIDTO> obtenerPdiPorId(@PathVariable Long id) {
-        PdIDTO dto = fachadaProcesadorPdI.buscarPdIPorId(String.valueOf(id));
+    public ResponseEntity<PdiDTONuevo> obtenerPdiPorId(@PathVariable Long id) {
+        PdiDTONuevo dto = fachadaProcesadorPdI.buscarPdIPorId(String.valueOf(id));
         return ResponseEntity.ok(dto);
     }
 
     // POST /pdis
     @PostMapping
-    public ResponseEntity<PdIDTO> procesarNuevoPdi(@RequestBody PdIDTO pdi) {
+    public ResponseEntity<PdiDTONuevo> procesarNuevoPdi(@RequestBody PdiDTONuevo pdi) {
         return ResponseEntity.ok(fachadaProcesadorPdI.procesar(pdi));
     }
 }

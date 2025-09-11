@@ -4,7 +4,7 @@ import ar.edu.utn.dds.k3003.model.PdI;
 import ar.edu.utn.dds.k3003.repository.PdIRepository;
 import ar.edu.utn.dds.k3003.facades.FachadaProcesadorPdINueva;
 import ar.edu.utn.dds.k3003.facades.FachadaSolicitudes;
-import ar.edu.utn.dds.k3003.facades.dtos.PdIDTO;
+import ar.edu.utn.dds.k3003.dtos.PdiDTONuevo;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -36,7 +36,7 @@ public class Fachada implements FachadaProcesadorPdINueva {
         this.fachadaSolicitudes = fachadaSolicitudes;
     }
     @Override
-    public PdIDTO procesar(PdIDTO dto) throws IllegalStateException {
+    public PdiDTONuevo procesar(PdiDTONuevo dto) throws IllegalStateException {
         log.info("Procesando PdI para hechoId={}", dto.hechoId());
 
         if (!fachadaSolicitudes.estaActivo(dto.hechoId())) {
@@ -67,7 +67,7 @@ public class Fachada implements FachadaProcesadorPdINueva {
     }
 
     @Override
-    public PdIDTO buscarPdIPorId(String idString) throws NoSuchElementException {
+    public PdiDTONuevo buscarPdIPorId(String idString) throws NoSuchElementException {
         log.info("Buscando PdI por id={}", idString);
         Long id = Long.parseLong(idString);
         PdI pdi =
@@ -77,24 +77,24 @@ public class Fachada implements FachadaProcesadorPdINueva {
                                 () ->
                                         new NoSuchElementException(
                                                 "No se encontró el PdI con id: " + id));
-        PdIDTO pdiDTO = mapearADTO(pdi);
+        PdiDTONuevo pdiDTO = mapearADTO(pdi);
         return pdiDTO;
     }
 
     @Override
-    public List<PdIDTO> buscarPorHecho(String hechoId) throws NoSuchElementException {
+    public List<PdiDTONuevo> buscarPorHecho(String hechoId) throws NoSuchElementException {
         log.info("Buscando PdIs por hechoId={}", hechoId);
         List<PdI> lista = pdIRepository.findByHechoId(hechoId);
 
         log.info("Encontrados={}", lista.size());
 
-        List<PdIDTO> listaPdiDTO =
+        List<PdiDTONuevo> listaPdiDTO =
                 lista.stream().map(this::mapearADTO).collect(Collectors.toList());
 
         return listaPdiDTO;
     }
 
-    public PdI dtoAPDI(PdIDTO pdiDTO) {
+    public PdI dtoAPDI(PdiDTONuevo pdiDTO) {
         PdI nuevoPdI =
                 new PdI(
                         pdiDTO.hechoId(),
@@ -105,7 +105,7 @@ public class Fachada implements FachadaProcesadorPdINueva {
                         pdiDTO.etiquetas());
         return nuevoPdI;
     }
-    private PdIDTO mapearADTO(PdI pdi) {
+    private PdiDTONuevo mapearADTO(PdI pdi) {
         return new PdIDTO(
                 String.valueOf(pdi.getId()),
                 pdi.getHechoId(),
@@ -117,7 +117,7 @@ public class Fachada implements FachadaProcesadorPdINueva {
         );
     }
     @Override
-        public List<PdIDTO> todosLosPdIs() {
+        public List<PdiDTONuevo> todosLosPdIs() {
             return this.pdIRepository.findAll()
                     .stream()
                     .map(this::mapearADTO)
