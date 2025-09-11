@@ -82,19 +82,27 @@ public class SolicitudesRestTemplateProxy implements FachadaSolicitudes {
 
     @Override
     public boolean estaActivo(String hechoId) throws NoSuchElementException {
-        // Opción A: endpoint booleano (si lo tienen)
+        /*// Opción A: endpoint booleano (si lo tienen)
         try {
-            var uri = UriComponentsBuilder.fromHttpUrl(api("/api/solicitudes/activo"))
+            var uri = UriComponentsBuilder.fromHttpUrl(api("/api/solicitudes"))
                     .queryParam("hecho", hechoId).build().toUri();
             ResponseEntity<Boolean> resp = rt.getForEntity(uri, Boolean.class);
             if (resp.getBody() != null) return resp.getBody();
         } catch (HttpClientErrorException.NotFound ignored) {
             // sigue a opción B
-        }
-
+        }*/
         // Opción B (fallback): hay solicitudes activas para ese hecho?
         var lista = buscarSolicitudXHecho(hechoId);
-        return lista != null && !lista.isEmpty(); // ajustá si tu DTO tiene un campo estado
+
+        if (lista == null || lista.isEmpty()) {
+            return false; // no hay solicitudes => no está activo
+        }
+
+        // Activo si al menos una solicitud NO está aceptada ni rechazada
+        return lista.stream().anyMatch(s -> 
+                s.getEstado() != EstadoSolicitudBorradoEnum.ACEPTADA &&
+                s.getEstado() != EstadoSolicitudBorradoEnum.RECHAZADA
+        );
     }
 
     @Override
