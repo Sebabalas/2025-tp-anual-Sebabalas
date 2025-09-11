@@ -100,8 +100,8 @@ public class SolicitudesRestTemplateProxy implements FachadaSolicitudes {
 
         // Activo si al menos una solicitud NO está aceptada ni rechazada
         return lista.stream().anyMatch(s -> 
-                s.getEstado() != EstadoSolicitudBorradoEnum.ACEPTADA &&
-                s.getEstado() != EstadoSolicitudBorradoEnum.RECHAZADA
+                s.estado() != EstadoSolicitudBorradoEnum.ACEPTADA &&
+                s.estado() != EstadoSolicitudBorradoEnum.RECHAZADA
         );
     }
 
