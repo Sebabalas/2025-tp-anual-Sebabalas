@@ -4,6 +4,7 @@ import ar.edu.utn.dds.k3003.model.PdI;
 import ar.edu.utn.dds.k3003.repository.PdIRepository;
 import ar.edu.utn.dds.k3003.facades.FachadaProcesadorPdINueva;
 import ar.edu.utn.dds.k3003.facades.FachadaSolicitudes;
+import ar.edu.utn.dds.k3003.facades.dtos.PdIDTO;
 import ar.edu.utn.dds.k3003.dtos.PdiDTONuevo;
 import lombok.Getter;
 import lombok.Setter;
@@ -12,12 +13,19 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestClientException;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
+
+import ar.edu.utn.dds.k3003.exceptions.dominio.pdi.HechoInactivoException;
+import ar.edu.utn.dds.k3003.exceptions.dominio.pdi.HechoInexistenteException;
+import ar.edu.utn.dds.k3003.exceptions.solicitudes.SolicitudesCommunicationException;
 
 @Service
 public class Fachada implements FachadaProcesadorPdINueva {
@@ -39,10 +47,22 @@ public class Fachada implements FachadaProcesadorPdINueva {
     public PdiDTONuevo procesar(PdiDTONuevo dto) throws IllegalStateException {
         log.info("Procesando PdI para hechoId={}", dto.hechoId());
 
-        if (!fachadaSolicitudes.estaActivo(dto.hechoId())) {
-            log.warn("El hecho no está activo: {}", dto.hechoId());
-            throw new IllegalStateException("El hecho no está activo");
-        }
+            boolean activo;
+    try {
+        activo = fachadaSolicitudes.estaActivo(dto.hechoId());
+        log.debug("Resultado de la consulta a Solicitudes.estaActivo({}): {}", dto.hechoId(), activo);
+    } catch (NoSuchElementException e) {
+        log.error("El hecho {} no existe en el sistema de Solicitudes", dto.hechoId(), e);
+        throw new HechoInexistenteException("Hecho inexistente: " + dto.hechoId(), e);
+    } catch (RestClientException  e) {
+        log.error("Error de comunicación con el servicio de Solicitudes al consultar {}", dto.hechoId(), e);
+        throw new SolicitudesCommunicationException("Fallo de comuniación con Solicitudes para el hecho: " + dto.hechoId(), e);
+    }
+
+    if (!activo) {
+        log.warn("Hecho {} inactivo: se interrumpe el procesamiento", dto.hechoId());
+        throw new HechoInactivoException("El hecho no se encuentra activo");
+    }
     
 
         PdI nuevoPdI = dtoAPDI(dto);
@@ -92,6 +112,44 @@ public class Fachada implements FachadaProcesadorPdINueva {
                 lista.stream().map(this::mapearADTO).collect(Collectors.toList());
 
         return listaPdiDTO;
+    }
+
+    public List<String> etiquetar(String contenido) {
+        List<String> etiquetas = new ArrayList<>();
+
+        if (contenido == null || contenido.isBlank()) {
+            etiquetas.add("sin clasificar");
+            return etiquetas;
+        }
+
+        String texto = contenido.toLowerCase();
+
+        // Diccionario de etiquetas con sus sinónimos
+        Map<String, List<String>> diccionario = new HashMap<>();
+        diccionario.put("incendio", List.of("fuego", "incendio", "quemar", "llamas"));
+        diccionario.put("inundación", List.of("agua", "inundación", "anegado", "desborde", "sumergido"));
+        diccionario.put("test", List.of("prueba", "probando", "test", "ensayo", "evaluación"));
+        diccionario.put("delito", List.of("robo", "asalto", "hurto", "saqueo", "crimen"));
+        diccionario.put("clima", List.of("tormenta", "lluvia fuerte", "granizo", "temporal", "viento"));
+        diccionario.put("social", List.of("manifestación", "protesta", "marcha", "huelga", "piquete"));
+
+        // Recorremos cada etiqueta y sus sinónimos
+        for (Map.Entry<String, List<String>> entrada : diccionario.entrySet()) {
+            String etiqueta = entrada.getKey();
+
+            for (String sinonimo : entrada.getValue()) {
+                if (texto.contains(sinonimo)) {
+                    etiquetas.add(etiqueta);
+                    break; // si ya la encontró, no hace falta seguir buscando ese grupo
+                }
+            }
+        }
+
+        if (etiquetas.isEmpty()) {
+            etiquetas.add("sin clasificar");
+        }
+
+        return etiquetas;
     }
 
     public PdI dtoAPDI(PdiDTONuevo pdiDTO) {
