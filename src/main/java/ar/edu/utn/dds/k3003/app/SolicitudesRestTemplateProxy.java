@@ -98,11 +98,12 @@ public class SolicitudesRestTemplateProxy implements FachadaSolicitudes {
             return false; // no hay solicitudes => no está activo
         }
 
-        // Activo si al menos una solicitud NO está aceptada ni rechazada
-        return lista.stream().anyMatch(s -> 
-                s.estado() != EstadoSolicitudBorradoEnum.ACEPTADA &&
-                s.estado() != EstadoSolicitudBorradoEnum.RECHAZADA
+        boolean tieneAceptadaORechazada = lista.stream().anyMatch(s -> 
+                s.estado() == EstadoSolicitudBorradoEnum.ACEPTADA ||
+                s.estado() == EstadoSolicitudBorradoEnum.RECHAZADA
         );
+        // Activo si todas las solicitudes NO están aceptadas ni rechazadas
+        return !tieneAceptadaORechazada;
     }
 
     @Override
