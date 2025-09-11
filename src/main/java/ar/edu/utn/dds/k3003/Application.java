@@ -13,8 +13,4 @@ public class Application {
         var ctx = SpringApplication.run(Application.class, args);
         System.out.println("Perfiles activos: " + Arrays.toString(ctx.getEnvironment().getActiveProfiles()));
     }
-     @GetMapping(path = "/", produces = "text/plain")
-    public String home() {
-        return "¡La app está corriendo!";
-    }
 }
