@@ -9,6 +9,7 @@ import ar.edu.utn.dds.k3003.dtos.PdiDTONuevo;
 import lombok.Getter;
 import lombok.Setter;
 
+import ar.edu.utn.dds.k3003.clients.SolicitudesRestTemplateProxy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,8 +37,10 @@ public class Fachada implements FachadaProcesadorPdINueva {
     private FachadaSolicitudes fachadaSolicitudes;
 
     @Autowired
-    public Fachada(PdIRepository pdiRepository) {
+    public Fachada(PdIRepository pdiRepository, FachadaSolicitudes fachadaSolicitudes) {
         this.pdIRepository = pdiRepository;
+        this.fachadaSolicitudes = fachadaSolicitudes;
+
     }
     @Override
     public void setFachadaSolicitudes(FachadaSolicitudes fachadaSolicitudes) {

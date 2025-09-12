@@ -1,4 +1,4 @@
-package ar.edu.utn.dds.k3003.app;
+package ar.edu.utn.dds.k3003.clients;
 
 import ar.edu.utn.dds.k3003.facades.FachadaFuente;
 import ar.edu.utn.dds.k3003.facades.FachadaSolicitudes;
@@ -20,7 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @Component
-@Profile("prod")
+//@Profile("prod")
 public class SolicitudesRestTemplateProxy implements FachadaSolicitudes {
 
     private static final Logger log = LoggerFactory.getLogger(SolicitudesRestTemplateProxy.class);
