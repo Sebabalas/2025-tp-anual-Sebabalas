@@ -17,6 +17,9 @@ public interface FachadaProcesadorPdINueva {
 
     List<PdiDTONuevo> todosLosPdIs();
 
+    void eliminarTodos();
+
+    void eliminarPorHecho(String hechoId);
 
 
 }

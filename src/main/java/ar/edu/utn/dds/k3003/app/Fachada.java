@@ -164,7 +164,7 @@ public class Fachada implements FachadaProcesadorPdINueva {
         return nuevoPdI;
     }
     private PdiDTONuevo mapearADTO(PdI pdi) {
-        return new PdIDTO(
+        return new PdiDTONuevo(
                 String.valueOf(pdi.getId()),
                 pdi.getHechoId(),
                 pdi.getDescripcion(),
@@ -181,4 +181,15 @@ public class Fachada implements FachadaProcesadorPdINueva {
                     .map(this::mapearADTO)
                     .toList();
         }
+    @Override
+    public void eliminarTodos() {
+        log.warn("Eliminando TODOS los PdIs");
+        pdIRepository.deleteAll();
+    }
+
+    @Override
+    public void eliminarPorHecho(String hechoId) {
+        log.warn("Eliminando PdIs asociados al hecho {}", hechoId);
+        pdIRepository.deleteByHechoId(hechoId);
+}
 }

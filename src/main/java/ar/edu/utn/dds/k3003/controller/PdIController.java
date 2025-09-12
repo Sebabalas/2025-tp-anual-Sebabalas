@@ -49,4 +49,17 @@ public class PdIController {
     public ResponseEntity<PdiDTONuevo> procesarNuevoPdi(@RequestBody PdiDTONuevo pdi) {
         return ResponseEntity.ok(fachadaProcesadorPdI.procesar(pdi));
     }
+    // DELETE /pdis -> elimina TODOS
+    @DeleteMapping
+    public ResponseEntity<Void> eliminarTodos() {
+        fachadaProcesadorPdI.eliminarTodos();
+        return ResponseEntity.noContent().build();
+    }
+    
+    // DELETE /pdis/hecho/{hechoId} -> elimina por hecho
+    @DeleteMapping("/hecho/{hechoId}")
+    public ResponseEntity<Void> eliminarPorHecho(@PathVariable String hechoId) {
+        fachadaProcesadorPdI.eliminarPorHecho(hechoId);
+        return ResponseEntity.noContent().build();
+    }
 }

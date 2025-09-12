@@ -10,4 +10,6 @@ public interface PdIRepository {
     List<PdI> findByHechoId(String id);
     PdI save(PdI pdi);
     List<PdI> findAll();
+    void deleteAll();
+    void deleteByHechoId(String hechoId);
 }
