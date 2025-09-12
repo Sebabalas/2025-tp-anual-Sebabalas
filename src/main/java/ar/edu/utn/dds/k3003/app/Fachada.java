@@ -50,7 +50,26 @@ public class Fachada implements FachadaProcesadorPdINueva {
     public PdiDTONuevo procesar(PdiDTONuevo dto) throws IllegalStateException {
         log.info("Procesando PdI para hechoId={}", dto.hechoId());
 
-            boolean activo;
+        PdI nuevoPdI = dtoAPDI(dto);
+
+        Optional<PdI> PdIYaProcesado =
+                pdIRepository.findByHechoId(nuevoPdI.getHechoId()).stream()
+                        .filter(
+                                p ->
+                                        p.getDescripcion().equals(nuevoPdI.getDescripcion())
+                                                && p.getLugar().equals(nuevoPdI.getLugar())
+                                                && p.getMomento().equals(nuevoPdI.getMomento())
+                                                && p.getContenido().equals(nuevoPdI.getContenido()))
+                        .findFirst();
+            
+        if (PdIYaProcesado.isPresent()) {
+            log.info("El PdI con hechoId={} ya estaba procesado. Se devuelve el existente con id={}",
+                    nuevoPdI.getHechoId(),
+                    PdIYaProcesado.get().getId());
+            return mapearADTO(PdIYaProcesado.get());
+        } 
+        
+        boolean activo;
     try {
         activo = fachadaSolicitudes.estaActivo(dto.hechoId());
         log.debug("Resultado de la consulta a Solicitudes.estaActivo({}): {}", dto.hechoId(), activo);
@@ -68,20 +87,7 @@ public class Fachada implements FachadaProcesadorPdINueva {
     }
     
 
-        PdI nuevoPdI = dtoAPDI(dto);
-        Optional<PdI> PdIYaProcesado =
-                pdIRepository.findByHechoId(nuevoPdI.getHechoId()).stream()
-                        .filter(
-                                p ->
-                                        p.getDescripcion().equals(nuevoPdI.getDescripcion())
-                                                && p.getLugar().equals(nuevoPdI.getLugar())
-                                                && p.getMomento().equals(nuevoPdI.getMomento())
-                                                && p.getContenido().equals(nuevoPdI.getContenido()))
-                        .findFirst();
-
-        if (PdIYaProcesado.isPresent()) {
-            return mapearADTO(PdIYaProcesado.get());
-        }
+        
         nuevoPdI.setEtiquetas(etiquetar(nuevoPdI.getContenido())); 
         PdI guardado = pdIRepository.save(nuevoPdI);
 
