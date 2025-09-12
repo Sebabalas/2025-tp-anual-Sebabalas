@@ -20,7 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @Component
-//@Profile("prod")
+@Profile("prod")
 public class SolicitudesRestTemplateProxy implements FachadaSolicitudes {
 
     private static final Logger log = LoggerFactory.getLogger(SolicitudesRestTemplateProxy.class);
@@ -84,45 +84,38 @@ public class SolicitudesRestTemplateProxy implements FachadaSolicitudes {
     }
 
     @Override
-    public boolean estaActivo(String hechoId) throws NoSuchElementException {
-        /*// Opción A: endpoint booleano (si lo tienen)
+    public boolean estaActivo(String hechoId) {
         try {
-            var uri = UriComponentsBuilder.fromHttpUrl(api("/api/solicitudes"))
-                    .queryParam("hecho", hechoId).build().toUri();
+            var uri = UriComponentsBuilder
+                    .fromHttpUrl(api("/api/solicitudes/activo"))
+                    .queryParam("hecho", hechoId)
+                    .build()
+                    .toUri();
+
+            log.info("Consultando estado activo para hechoId={} en {}", hechoId, uri);
+
             ResponseEntity<Boolean> resp = rt.getForEntity(uri, Boolean.class);
-            if (resp.getBody() != null) return resp.getBody();
-        } catch (HttpClientErrorException.NotFound ignored) {
-            // sigue a opción B
-        }*/
-        // Opción B (fallback): hay solicitudes activas para ese hecho?
-        log.info("==> Verificando si hecho {} está activo", hechoId);
 
-    var lista = buscarSolicitudXHecho(hechoId);
-    log.info("Solicitudes encontradas: {}", lista);
-
-    if (lista == null || lista.isEmpty()) {
-        log.info("No hay solicitudes para el hecho {} => retornando false", hechoId);
-        return false; // no hay solicitudes => no está activo
+            if (resp.getStatusCode().is2xxSuccessful() && resp.getBody() != null) {
+                log.info("Respuesta recibida para hechoId={}: {}", hechoId, resp.getBody());
+                return resp.getBody();
+            } else {
+                log.warn("Respuesta inválida para hechoId={}, status={}, body={}",
+                        hechoId, resp.getStatusCode(), resp.getBody());
+                return false;
+            }
+        } catch (HttpClientErrorException.NotFound e) {
+            log.warn("HechoId={} no encontrado en solicitudes (404).", hechoId);
+            return false;
+        } catch (Exception e) {
+            log.error("Error consultando solicitudes para hechoId={}: {}", hechoId, e.getMessage(), e);
+            return false;
+        }
     }
-
-    log.info("Cantidad de solicitudes encontradas: {}", lista.size());
-    lista.forEach(s -> log.info("Solicitud id={} estado={}", s.id(), s.estado()));
-
-    boolean tieneAceptadaORechazada = lista.stream().anyMatch(s ->
-            s.estado() == EstadoSolicitudBorradoEnum.ACEPTADA ||
-            s.estado() == EstadoSolicitudBorradoEnum.RECHAZADA
-    );
-
-    log.info("¿Tiene alguna aceptada o rechazada? {}", tieneAceptadaORechazada);
-
-    boolean resultado = !tieneAceptadaORechazada;
-    log.info("Resultado final (activo): {}", resultado);
-
-    return resultado;
-}
 
     @Override
     public void setFachadaFuente(FachadaFuente fachadaFuente) {
         // si más adelante necesitás encadenar llamadas, inyectalo aquí
     }
+
 }
