@@ -18,7 +18,9 @@ public class RootController {
                         "GET  " + BASE_URL + "/api/pdis",
                         "GET  " + BASE_URL + "/api/pdis?hecho={hechoId}",
                         "GET  " + BASE_URL + "/api/pdis/{id}",
-                        "POST " + BASE_URL + "/api/pdis"
+                        "POST " + BASE_URL + "/api/pdis",
+                        "DELETE " + BASE_URL + "/api/pdis/hecho",
+                        "DELETE " + BASE_URL + "/api/pdis/hecho/{hechoId}",
                 }
         );
     }
