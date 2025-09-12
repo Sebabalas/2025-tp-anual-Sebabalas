@@ -81,7 +81,8 @@ public class Fachada implements FachadaProcesadorPdINueva {
 
         if (PdIYaProcesado.isPresent()) {
             return mapearADTO(PdIYaProcesado.get());
-        } 
+        }
+        nuevoPdI.setEtiquetas(etiquetar(nuevoPdI.getContenido())); 
         PdI guardado = pdIRepository.save(nuevoPdI);
 
         log.info("Se guardó el PdI con ID {} en hechoId: {}", guardado.getId(), guardado.getHechoId());
