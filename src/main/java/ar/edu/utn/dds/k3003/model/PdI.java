@@ -31,7 +31,13 @@ public class PdI {
 
     private String contenido;
 
-    @ElementCollection private List<String> etiquetas;
+    @ElementCollection
+    @CollectionTable(
+        name = "pdi_etiquetas",
+        joinColumns = @JoinColumn(name = "pdi_id")
+    )
+    @Column(name = "etiqueta")
+    private List<String> etiquetas;
 
     public PdI(
             String hechoId,
