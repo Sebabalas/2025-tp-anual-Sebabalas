@@ -16,11 +16,14 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Component
 @Profile("prod")
 public class SolicitudesRestTemplateProxy implements FachadaSolicitudes {
 
+    private static final Logger log = LoggerFactory.getLogger(SolicitudesRestTemplateProxy.class);
     private final RestTemplate rt;
     private final String base; // debe terminar en "/"
 
@@ -92,19 +95,31 @@ public class SolicitudesRestTemplateProxy implements FachadaSolicitudes {
             // sigue a opción B
         }*/
         // Opción B (fallback): hay solicitudes activas para ese hecho?
-        var lista = buscarSolicitudXHecho(hechoId);
+        log.info("==> Verificando si hecho {} está activo", hechoId);
 
-        if (lista == null || lista.isEmpty()) {
-            return false; // no hay solicitudes => no está activo
-        }
+    var lista = buscarSolicitudXHecho(hechoId);
+    log.info("Solicitudes encontradas: {}", lista);
 
-        boolean tieneAceptadaORechazada = lista.stream().anyMatch(s -> 
-                s.estado() == EstadoSolicitudBorradoEnum.ACEPTADA ||
-                s.estado() == EstadoSolicitudBorradoEnum.RECHAZADA
-        );
-        // Activo si todas las solicitudes NO están aceptadas ni rechazadas
-        return !tieneAceptadaORechazada;
+    if (lista == null || lista.isEmpty()) {
+        log.info("No hay solicitudes para el hecho {} => retornando false", hechoId);
+        return false; // no hay solicitudes => no está activo
     }
+
+    log.info("Cantidad de solicitudes encontradas: {}", lista.size());
+    lista.forEach(s -> log.info("Solicitud id={} estado={}", s.id(), s.estado()));
+
+    boolean tieneAceptadaORechazada = lista.stream().anyMatch(s ->
+            s.estado() == EstadoSolicitudBorradoEnum.ACEPTADA ||
+            s.estado() == EstadoSolicitudBorradoEnum.RECHAZADA
+    );
+
+    log.info("¿Tiene alguna aceptada o rechazada? {}", tieneAceptadaORechazada);
+
+    boolean resultado = !tieneAceptadaORechazada;
+    log.info("Resultado final (activo): {}", resultado);
+
+    return resultado;
+}
 
     @Override
     public void setFachadaFuente(FachadaFuente fachadaFuente) {
