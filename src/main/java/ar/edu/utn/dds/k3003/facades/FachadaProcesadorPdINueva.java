@@ -20,6 +20,4 @@ public interface FachadaProcesadorPdINueva {
     void eliminarTodos();
 
     void eliminarPorHecho(String hechoId);
-
-
 }
