@@ -61,7 +61,7 @@ public class Fachada implements FachadaProcesadorPdINueva {
                                                 && p.getMomento().equals(nuevoPdI.getMomento())
                                                 && p.getContenido().equals(nuevoPdI.getContenido()))
                         .findFirst();
-            
+
         if (PdIYaProcesado.isPresent()) {
             log.info("El PdI con hechoId={} ya estaba procesado. Se devuelve el existente con id={}",
                     nuevoPdI.getHechoId(),
@@ -198,8 +198,16 @@ public class Fachada implements FachadaProcesadorPdINueva {
     }
 
     @Override
-    public void eliminarPorHecho(String hechoId) {
-        log.warn("Eliminando PdIs asociados al hecho {}", hechoId);
-        pdIRepository.deleteByHechoId(hechoId);
+public void eliminarPorHecho(String hechoId) {
+    log.info("[PdI] Pedido de eliminación por hechoId={}", hechoId);
+
+    List<PdI> antes = pdIRepository.findByHechoId(hechoId);
+    log.info("[PdI] Encontrados {} registros antes de eliminar", antes.size());
+    antes.forEach(p -> log.debug("[PdI] -> id={}, hechoId={}, descripcion={}", p.getId(), p.getHechoId(), p.getDescripcion()));
+
+    pdIRepository.deleteByHechoId(hechoId);
+
+    List<PdI> despues = pdIRepository.findByHechoId(hechoId);
+    log.info("[PdI] Quedan {} registros después de eliminar", despues.size());
 }
 }
