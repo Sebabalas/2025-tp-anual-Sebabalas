@@ -1,0 +1,24 @@
+package ar.edu.utn.dds.k3003.model;
+
+import jakarta.persistence.*;
+import lombok.*;
+
+@Entity
+@Table(name = "resultados_analisis")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+public class ResultadoAnalisis {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    private String tipo;   // OCR, ETIQUETADOR, etc.
+    private String detalle; // JSON, texto, lista serializada
+
+    @ManyToOne
+    @JoinColumn(name = "pdi_id")
+    private PdI pdi;
+}

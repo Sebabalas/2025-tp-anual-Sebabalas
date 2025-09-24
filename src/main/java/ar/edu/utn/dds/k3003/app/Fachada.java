@@ -1,53 +1,49 @@
 package ar.edu.utn.dds.k3003.app;
 
 import ar.edu.utn.dds.k3003.model.PdI;
+
+import ar.edu.utn.dds.k3003.model.ResultadoAnalisis;
 import ar.edu.utn.dds.k3003.repository.PdIRepository;
 import ar.edu.utn.dds.k3003.facades.FachadaProcesadorPdINueva;
 import ar.edu.utn.dds.k3003.facades.FachadaSolicitudes;
-import ar.edu.utn.dds.k3003.facades.dtos.PdIDTO;
+import ar.edu.utn.dds.k3003.app.analisis.ProcesadorAnalisis;
 import ar.edu.utn.dds.k3003.dtos.PdiDTONuevo;
-import lombok.Getter;
-import lombok.Setter;
-
-import ar.edu.utn.dds.k3003.clients.SolicitudesRestTemplateProxy;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import ar.edu.utn.dds.k3003.exceptions.dominio.pdi.HechoInactivoException;
+import ar.edu.utn.dds.k3003.exceptions.dominio.pdi.HechoInexistenteException;
+import ar.edu.utn.dds.k3003.exceptions.solicitudes.SolicitudesCommunicationException;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClientException;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import ar.edu.utn.dds.k3003.exceptions.dominio.pdi.HechoInactivoException;
-import ar.edu.utn.dds.k3003.exceptions.dominio.pdi.HechoInexistenteException;
-import ar.edu.utn.dds.k3003.exceptions.solicitudes.SolicitudesCommunicationException;
-
 @Service
+@Slf4j
 public class Fachada implements FachadaProcesadorPdINueva {
-
-    private static final Logger log = LoggerFactory.getLogger(Fachada.class);
 
     private final PdIRepository pdIRepository;
     private FachadaSolicitudes fachadaSolicitudes;
+    private final ProcesadorAnalisis procesadorAnalisis;
 
     @Autowired
-    public Fachada(PdIRepository pdiRepository, FachadaSolicitudes fachadaSolicitudes) {
+    public Fachada(PdIRepository pdiRepository, FachadaSolicitudes fachadaSolicitudes, OCRService OCRService) {
         this.pdIRepository = pdiRepository;
         this.fachadaSolicitudes = fachadaSolicitudes;
+        this.OCRService = OCRService;
 
     }
+
     @Override
     public void setFachadaSolicitudes(FachadaSolicitudes fachadaSolicitudes) {
         this.fachadaSolicitudes = fachadaSolicitudes;
     }
+
     @Override
-    public PdiDTONuevo procesar(PdiDTONuevo dto) throws IllegalStateException {
+    public PdiDTONuevo procesar(PdiDTONuevo dto) {
         log.info("Procesando PdI para hechoId={}", dto.hechoId());
 
         PdI nuevoPdI = dtoAPDI(dto);
@@ -67,28 +63,25 @@ public class Fachada implements FachadaProcesadorPdINueva {
                     nuevoPdI.getHechoId(),
                     PdIYaProcesado.get().getId());
             return mapearADTO(PdIYaProcesado.get());
-        } 
-        
+        }
+
         boolean activo;
-    try {
-        activo = fachadaSolicitudes.estaActivo(dto.hechoId());
-        log.debug("Resultado de la consulta a Solicitudes.estaActivo({}): {}", dto.hechoId(), activo);
-    } catch (NoSuchElementException e) {
-        log.error("El hecho {} no existe en el sistema de Solicitudes", dto.hechoId(), e);
-        throw new HechoInexistenteException("Hecho inexistente: " + dto.hechoId(), e);
-    } catch (RestClientException  e) {
-        log.error("Error de comunicación con el servicio de Solicitudes al consultar {}", dto.hechoId(), e);
-        throw new SolicitudesCommunicationException("Fallo de comuniación con Solicitudes para el hecho: " + dto.hechoId(), e);
-    }
+        try {
+            activo = fachadaSolicitudes.estaActivo(dto.hechoId());
+            log.debug("Resultado de la consulta a Solicitudes.estaActivo({}): {}", dto.hechoId(), activo);
+        } catch (NoSuchElementException e) {
+            throw new HechoInexistenteException("Hecho inexistente: " + dto.hechoId(), e);
+        } catch (RestClientException e) {
+            throw new SolicitudesCommunicationException("Fallo de comunicación con Solicitudes para el hecho: " + dto.hechoId(), e);
+        }
 
-    if (!activo) {
-        log.warn("Hecho {} inactivo: se interrumpe el procesamiento", dto.hechoId());
-        throw new HechoInactivoException("El hecho no se encuentra activo");
-    }
-    
+        if (!activo) {
+            throw new HechoInactivoException("El hecho no se encuentra activo");
+        }
 
-        
-        nuevoPdI.setEtiquetas(etiquetar(nuevoPdI.getContenido())); 
+         // 🚨 Llamada al Procesador de Análisis (OCR, etiquetas, etc.)
+        procesadorAnalisis.procesarAnalisis(nuevoPdI);
+
         PdI guardado = pdIRepository.save(nuevoPdI);
 
         log.info("Se guardó el PdI con ID {} en hechoId: {}", guardado.getId(), guardado.getHechoId());
@@ -97,83 +90,36 @@ public class Fachada implements FachadaProcesadorPdINueva {
     }
 
     @Override
-    public PdiDTONuevo buscarPdIPorId(String idString) throws NoSuchElementException {
-        log.info("Buscando PdI por id={}", idString);
+    public PdiDTONuevo buscarPdIPorId(String idString) {
         Long id = Long.parseLong(idString);
         PdI pdi =
                 pdIRepository
                         .findById(id)
-                        .orElseThrow(
-                                () ->
-                                        new NoSuchElementException(
-                                                "No se encontró el PdI con id: " + id));
-        PdiDTONuevo pdiDTO = mapearADTO(pdi);
-        return pdiDTO;
+                        .orElseThrow(() -> new NoSuchElementException("No se encontró el PdI con id: " + id));
+        return mapearADTO(pdi);
     }
 
     @Override
-    public List<PdiDTONuevo> buscarPorHecho(String hechoId) throws NoSuchElementException {
-        log.info("Buscando PdIs por hechoId={}", hechoId);
+    public List<PdiDTONuevo> buscarPorHecho(String hechoId) {
         List<PdI> lista = pdIRepository.findByHechoId(hechoId);
-
-        log.info("Encontrados={}", lista.size());
-
-        List<PdiDTONuevo> listaPdiDTO =
-                lista.stream().map(this::mapearADTO).collect(Collectors.toList());
-
-        return listaPdiDTO;
+        return lista.stream().map(this::mapearADTO).collect(Collectors.toList());
     }
 
-    public List<String> etiquetar(String contenido) {
-        List<String> etiquetas = new ArrayList<>();
-
-        if (contenido == null || contenido.isBlank()) {
-            etiquetas.add("sin clasificar");
-            return etiquetas;
-        }
-
-        String texto = contenido.toLowerCase();
-
-        // Diccionario de etiquetas con sus sinónimos
-        Map<String, List<String>> diccionario = new HashMap<>();
-        diccionario.put("incendio", List.of("fuego", "incendio", "quemar", "llamas"));
-        diccionario.put("inundación", List.of("agua", "inundación", "anegado", "desborde", "sumergido"));
-        diccionario.put("test", List.of("prueba", "probando", "test", "ensayo", "evaluación"));
-        diccionario.put("delito", List.of("robo", "asalto", "hurto", "saqueo", "crimen"));
-        diccionario.put("clima", List.of("tormenta", "lluvia fuerte", "granizo", "temporal", "viento"));
-        diccionario.put("social", List.of("manifestación", "protesta", "marcha", "huelga", "piquete"));
-
-        // Recorremos cada etiqueta y sus sinónimos
-        for (Map.Entry<String, List<String>> entrada : diccionario.entrySet()) {
-            String etiqueta = entrada.getKey();
-
-            for (String sinonimo : entrada.getValue()) {
-                if (texto.contains(sinonimo)) {
-                    etiquetas.add(etiqueta);
-                    break; // si ya la encontró, no hace falta seguir buscando ese grupo
-                }
-            }
-        }
-
-        if (etiquetas.isEmpty()) {
-            etiquetas.add("sin clasificar");
-        }
-
-        return etiquetas;
+    private PdI dtoAPDI(PdiDTONuevo pdiDTO) {
+        return new PdI(
+                pdiDTO.hechoId(),
+                pdiDTO.descripcion(),
+                pdiDTO.lugar(),
+                pdiDTO.momento(),
+                pdiDTO.contenido()
+        );
     }
 
-    public PdI dtoAPDI(PdiDTONuevo pdiDTO) {
-        PdI nuevoPdI =
-                new PdI(
-                        pdiDTO.hechoId(),
-                        pdiDTO.descripcion(),
-                        pdiDTO.lugar(),
-                        pdiDTO.momento(),
-                        pdiDTO.contenido(),
-                        pdiDTO.etiquetas());
-        return nuevoPdI;
-    }
     private PdiDTONuevo mapearADTO(PdI pdi) {
+        List<String> resultados = pdi.getResultados().stream()
+                .map(r -> r.getTipo() + ":" + r.getDetalle())
+                .toList();
+
         return new PdiDTONuevo(
                 String.valueOf(pdi.getId()),
                 pdi.getHechoId(),
@@ -181,33 +127,25 @@ public class Fachada implements FachadaProcesadorPdINueva {
                 pdi.getLugar(),
                 pdi.getMomento(),
                 pdi.getContenido(),
-                pdi.getEtiquetas()
+                resultados
         );
     }
+
     @Override
-        public List<PdiDTONuevo> todosLosPdIs() {
-            return this.pdIRepository.findAll()
-                    .stream()
-                    .map(this::mapearADTO)
-                    .toList();
-        }
+    public List<PdiDTONuevo> todosLosPdIs() {
+        return pdIRepository.findAll()
+                .stream()
+                .map(this::mapearADTO)
+                .toList();
+    }
+
     @Override
     public void eliminarTodos() {
-        log.warn("Eliminando TODOS los PdIs");
         pdIRepository.deleteAll();
     }
 
     @Override
-public void eliminarPorHecho(String hechoId) {
-    log.info("[PdI] Pedido de eliminación por hechoId={}", hechoId);
-
-    List<PdI> antes = pdIRepository.findByHechoId(hechoId);
-    log.info("[PdI] Encontrados {} registros antes de eliminar", antes.size());
-    antes.forEach(p -> log.debug("[PdI] -> id={}, hechoId={}, descripcion={}", p.getId(), p.getHechoId(), p.getDescripcion()));
-
-    pdIRepository.deleteByHechoId(hechoId);
-
-    List<PdI> despues = pdIRepository.findByHechoId(hechoId);
-    log.info("[PdI] Quedan {} registros después de eliminar", despues.size());
-}
+    public void eliminarPorHecho(String hechoId) {
+        pdIRepository.deleteByHechoId(hechoId);
+    }
 }

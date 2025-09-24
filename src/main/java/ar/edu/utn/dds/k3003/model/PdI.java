@@ -1,12 +1,12 @@
 package ar.edu.utn.dds.k3003.model;
 
+import ar.edu.utn.dds.k3003.model.ResultadoAnalisis;
 import com.fasterxml.jackson.annotation.JsonFormat;
-
 import jakarta.persistence.*;
-
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -15,7 +15,6 @@ import java.util.List;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
- 
 public class PdI {
 
     @Id
@@ -31,26 +30,21 @@ public class PdI {
 
     private String contenido;
 
-    @ElementCollection
-    @CollectionTable(
-        name = "pdi_etiquetas",
-        joinColumns = @JoinColumn(name = "pdi_id")
-    )
-    @Column(name = "etiqueta")
-    private List<String> etiquetas;
+    // resultados de análisis asociados
+    @OneToMany(mappedBy = "pdi", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    private List<ResultadoAnalisis> resultados = new ArrayList<>();
 
-    public PdI(
-            String hechoId,
-            String descripcion,
-            String lugar,
-            LocalDateTime momento,
-            String contenido,
-            List<String> etiquetas) {
+    public void agregarResultado(ResultadoAnalisis resultado) {
+        resultado.setPdi(this);
+        this.resultados.add(resultado);
+    }
+
+    // constructor sin resultados (se usan después con addResultado)
+    public PdI(String hechoId, String descripcion, String lugar, LocalDateTime momento, String contenido) {
         this.hechoId = hechoId;
         this.descripcion = descripcion;
         this.lugar = lugar;
         this.momento = momento;
         this.contenido = contenido;
-        this.etiquetas = etiquetas;
     }
 }
