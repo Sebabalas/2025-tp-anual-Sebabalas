@@ -11,7 +11,10 @@ import ar.edu.utn.dds.k3003.dtos.PdiDTONuevo;
 import ar.edu.utn.dds.k3003.exceptions.dominio.pdi.HechoInactivoException;
 import ar.edu.utn.dds.k3003.exceptions.dominio.pdi.HechoInexistenteException;
 import ar.edu.utn.dds.k3003.exceptions.solicitudes.SolicitudesCommunicationException;
-import lombok.extern.slf4j.Slf4j;
+
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClientException;
@@ -22,18 +25,19 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
-@Slf4j
 public class Fachada implements FachadaProcesadorPdINueva {
 
     private final PdIRepository pdIRepository;
     private FachadaSolicitudes fachadaSolicitudes;
     private final ProcesadorAnalisis procesadorAnalisis;
 
+    private static final Logger log = LoggerFactory.getLogger(Fachada.class);
+
     @Autowired
-    public Fachada(PdIRepository pdiRepository, FachadaSolicitudes fachadaSolicitudes, OCRService OCRService) {
+    public Fachada(PdIRepository pdiRepository, FachadaSolicitudes fachadaSolicitudes, ProcesadorAnalisis procesadorAnalisis) {
         this.pdIRepository = pdiRepository;
         this.fachadaSolicitudes = fachadaSolicitudes;
-        this.OCRService = OCRService;
+        this.procesadorAnalisis = procesadorAnalisis;
 
     }
 
@@ -111,7 +115,8 @@ public class Fachada implements FachadaProcesadorPdINueva {
                 pdiDTO.descripcion(),
                 pdiDTO.lugar(),
                 pdiDTO.momento(),
-                pdiDTO.contenido()
+                pdiDTO.contenido(),
+                pdiDTO.imageUrl()
         );
     }
 
@@ -127,7 +132,7 @@ public class Fachada implements FachadaProcesadorPdINueva {
                 pdi.getLugar(),
                 pdi.getMomento(),
                 pdi.getContenido(),
-                resultados
+                pdi.getImageUrl()
         );
     }
 

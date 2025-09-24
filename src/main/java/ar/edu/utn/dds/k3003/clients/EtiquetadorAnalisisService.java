@@ -17,7 +17,7 @@ public class EtiquetadorAnalisisService implements AnalisisService {
 
     @Override
     public ResultadoAnalisis ejecutar(PdI pdi) {
-        if (pdi.getContenido() == null || !pdi.getContenido().startsWith("http")) {
+        if (pdi.getImageUrl() == null || !pdi.getImageUrl().startsWith("http")) {
             return null; // Solo analizamos si hay URL
         }
 
@@ -25,6 +25,6 @@ public class EtiquetadorAnalisisService implements AnalisisService {
         List<String> etiquetas = List.of("persona", "calle", "auto");
         String detalle = String.join(",", etiquetas);
 
-        return new ResultadoAnalisis(null, tipo(), detalle, pdi);
+        return new ResultadoAnalisis(tipo(), detalle, pdi);
     }
 }

@@ -10,11 +10,11 @@ public record PdiDTONuevo(
         String lugar,
         LocalDateTime momento,
         String contenido,
-        List<String> etiquetas
+        String imageUrl
 ) {
 
   public PdiDTONuevo(String id,String hechoId) {
-    this(id,hechoId, null, null, null, null, List.of());
+    this(id,hechoId, null, null, null, null, null);
   }
 
 }

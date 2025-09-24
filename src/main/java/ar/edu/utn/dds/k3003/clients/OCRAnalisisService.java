@@ -8,6 +8,12 @@ import org.springframework.stereotype.Service;
 @Service
 public class OCRAnalisisService implements AnalisisService {
 
+    private final OCRClient OCRClient;
+
+    public OCRAnalisisService(OCRClient OCRClient) {
+        this.OCRClient = OCRClient;
+    }
+
     @Override
     public String tipo() {
         return "OCR";
@@ -15,13 +21,11 @@ public class OCRAnalisisService implements AnalisisService {
 
     @Override
     public ResultadoAnalisis ejecutar(PdI pdi) {
-        if (pdi.getContenido() == null || !pdi.getContenido().startsWith("http")) {
+        if (pdi.getImageUrl() == null || !pdi.getImageUrl().startsWith("http")) {
             return null; // Solo analizamos si hay URL
         }
 
-        // Simulación de OCR
-        String textoExtraido = "Texto reconocido en imagen de " + pdi.getContenido();
-
-        return new ResultadoAnalisis(null, tipo(), textoExtraido, pdi);
+        String textoExtraido = OCRClient.procesarImagen(pdi.getImageUrl());
+        return new ResultadoAnalisis(tipo(), textoExtraido, pdi);
     }
 }

@@ -8,8 +8,8 @@ import org.springframework.web.client.RestTemplate;
 @Configuration
 public class RestTemplateConfig {
 
-    @Bean
-    public RestTemplate restTemplate() {
+    @Bean(name = "timeoutRestTemplate")
+    public RestTemplate timeoutRestTemplate() {
         var f = new SimpleClientHttpRequestFactory();
         f.setConnectTimeout(5_000);
         f.setReadTimeout(5_000);

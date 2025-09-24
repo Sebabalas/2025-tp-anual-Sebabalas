@@ -8,6 +8,8 @@ import java.net.URI;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.ParameterizedTypeReference;
@@ -20,14 +22,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @Component
-@Profile("prod")
+//@Profile("prod")
 public class SolicitudesRestTemplateProxy implements FachadaSolicitudes {
 
     private static final Logger log = LoggerFactory.getLogger(SolicitudesRestTemplateProxy.class);
     private final RestTemplate rt;
     private final String base; // debe terminar en "/"
 
-    public SolicitudesRestTemplateProxy(RestTemplate rt,
+    public SolicitudesRestTemplateProxy(@Qualifier("defaultRestTemplate")RestTemplate rt,
                                         @Value("${solicitudes.base-url}") String base) {
         this.rt = rt;
         this.base = base.endsWith("/") ? base : base + "/";

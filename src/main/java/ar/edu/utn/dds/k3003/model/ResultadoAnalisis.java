@@ -21,4 +21,11 @@ public class ResultadoAnalisis {
     @ManyToOne
     @JoinColumn(name = "pdi_id")
     private PdI pdi;
+
+    public ResultadoAnalisis(String tipo, String detalle, PdI pdi) {
+        this.tipo = tipo;
+        this.detalle = detalle;
+        this.pdi = pdi;
+    }
+
 }
