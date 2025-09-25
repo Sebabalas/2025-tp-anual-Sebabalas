@@ -16,6 +16,8 @@ public class ResultadoAnalisis {
     private Long id;
 
     private String tipo;   // OCR, ETIQUETADOR, etc.
+   
+    @Column(columnDefinition = "TEXT")
     private String detalle; // JSON, texto, lista serializada
 
     @ManyToOne

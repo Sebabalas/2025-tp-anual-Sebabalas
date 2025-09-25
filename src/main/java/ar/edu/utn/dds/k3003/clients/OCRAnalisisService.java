@@ -26,11 +26,15 @@ public class OCRAnalisisService implements AnalisisService {
 
     @Override
     public ResultadoAnalisis ejecutar(PdI pdi) {
-        if (pdi.getImageUrl() == null || !pdi.getImageUrl().startsWith("http")) {
-            log.warn("PdI sin URL válida: {}", pdi.getId());
+        String imageUrl = pdi.getImageUrl();
+
+        if (imageUrl == null || !imageUrl.startsWith("http") ||
+            !(imageUrl.endsWith(".png") || imageUrl.endsWith(".jpg") || imageUrl.endsWith(".jpeg"))) {
+            log.warn("PdI sin URL válida o con extensión no reconocida: {}", pdi.getId());
             return null;
         }
-        String texto = client.procesarImagen(pdi.getImageUrl());
+
+        String texto = client.procesarImagen(imageUrl);
         return new ResultadoAnalisis(tipo(), texto, pdi);
     }
 }
