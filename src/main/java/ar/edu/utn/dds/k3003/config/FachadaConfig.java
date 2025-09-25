@@ -7,6 +7,8 @@ import ar.edu.utn.dds.k3003.repository.PdIRepository;
 import ar.edu.utn.dds.k3003.app.analisis.AnalisisService;
 import ar.edu.utn.dds.k3003.app.analisis.ProcesadorAnalisis;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.client.RestTemplateBuilder;
@@ -19,6 +21,8 @@ import java.util.List;
 @Configuration
 public class FachadaConfig {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(FachadaConfig.class);
+
     @Bean(name = "defaultRestTemplate")
     public RestTemplate defaultRestTemplate(RestTemplateBuilder builder) {
         return builder.build();
@@ -26,6 +30,8 @@ public class FachadaConfig {
 
     @Bean
     public ProcesadorAnalisis procesadorAnalisis(List<AnalisisService> analizadores) {
+        LOGGER.info("Creando ProcesadorAnalisis con los siguientes analizadores:");
+        analizadores.forEach(an -> LOGGER.info(" - {}", an.getClass().getName()));
         return new ProcesadorAnalisis(analizadores);
     }
 

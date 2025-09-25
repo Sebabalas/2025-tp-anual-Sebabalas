@@ -5,11 +5,13 @@ import ar.edu.utn.dds.k3003.model.PdI;
 import ar.edu.utn.dds.k3003.model.ResultadoAnalisis;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
 @Service
+@ConditionalOnProperty(name = "analisis.etiquetador.enabled", havingValue = "true")
 public class EtiquetadorAnalisisService implements AnalisisService {
 
     private static final Logger log = LoggerFactory.getLogger(EtiquetadorAnalisisService.class);

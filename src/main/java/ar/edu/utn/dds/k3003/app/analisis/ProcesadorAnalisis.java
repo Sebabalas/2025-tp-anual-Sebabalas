@@ -20,12 +20,11 @@ public class ProcesadorAnalisis {
 
     public void procesarAnalisis(PdI pdi) {
         for (AnalisisService analizador : analizadores) {
-            if (pdi.getTiposDeAnalisisSolicitados().contains(analizador.tipo())) {
                 ResultadoAnalisis resultado = analizador.ejecutar(pdi);
                 if (resultado != null) {
                     pdi.agregarResultado(resultado);
                 }
-            }
+        
         }
     }
 }
