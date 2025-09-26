@@ -8,6 +8,7 @@ import ar.edu.utn.dds.k3003.facades.FachadaProcesadorPdINueva;
 import ar.edu.utn.dds.k3003.facades.FachadaSolicitudes;
 import ar.edu.utn.dds.k3003.app.analisis.ProcesadorAnalisis;
 import ar.edu.utn.dds.k3003.dtos.PdiDTONuevo;
+import ar.edu.utn.dds.k3003.dtos.ResultadoAnalisisDTO;
 import ar.edu.utn.dds.k3003.exceptions.dominio.pdi.HechoInactivoException;
 import ar.edu.utn.dds.k3003.exceptions.dominio.pdi.HechoInexistenteException;
 import ar.edu.utn.dds.k3003.exceptions.solicitudes.SolicitudesCommunicationException;
@@ -121,8 +122,8 @@ public class Fachada implements FachadaProcesadorPdINueva {
     }
 
     private PdiDTONuevo mapearADTO(PdI pdi) {
-        List<String> resultados = pdi.getResultados().stream()
-                .map(r -> r.getTipo() + ":" + r.getDetalle())
+        List<ResultadoAnalisisDTO> resultadosDTO = pdi.getResultados().stream()
+                .map(r -> new ResultadoAnalisisDTO(r.getTipo(), r.getDetalle()))
                 .toList();
 
         return new PdiDTONuevo(
@@ -132,9 +133,10 @@ public class Fachada implements FachadaProcesadorPdINueva {
                 pdi.getLugar(),
                 pdi.getMomento(),
                 pdi.getContenido(),
-                pdi.getImageUrl()
+                pdi.getImageUrl(),
+                resultadosDTO
         );
-    }
+    }   
 
     @Override
     public List<PdiDTONuevo> todosLosPdIs() {

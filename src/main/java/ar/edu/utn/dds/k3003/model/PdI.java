@@ -45,11 +45,7 @@ public class PdI {
     public void agregarResultado(ResultadoAnalisis resultado) {
         this.resultados.add(resultado);
     }
-
-    public void solicitarAnalisis(String tipo) {
-        tiposDeAnalisisSolicitados.add(tipo);
-    }
-
+    
     // constructor sin resultados (se usan después con addResultado)
     public PdI(String hechoId, String descripcion, String lugar, LocalDateTime momento, String contenido, String imageUrl) {
         this.hechoId = hechoId;
