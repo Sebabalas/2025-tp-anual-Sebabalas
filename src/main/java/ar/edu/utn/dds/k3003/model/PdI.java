@@ -35,7 +35,6 @@ public class PdI {
     private String contenido;
     private String imageUrl = "";
 
-    private Set<String> tiposDeAnalisisSolicitados = new HashSet<>();
 
 
     // resultados de análisis asociados
