@@ -15,6 +15,7 @@ public class RootController {
         return Map.of(
                 "status", "✅ App corriendo en Render",
                 "endpoints", new String[]{
+                        "GET  " + BASE_URL + "/api/health",
                         "GET  " + BASE_URL + "/api/pdis",
                         "GET  " + BASE_URL + "/api/pdis?hecho={hechoId}",
                         "GET  " + BASE_URL + "/api/pdis/{id}",
