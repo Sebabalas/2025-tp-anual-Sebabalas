@@ -28,15 +28,21 @@ public class EtiquetadorAnalisisService implements AnalisisService {
 
     @Override
     public ResultadoAnalisis ejecutar(PdI pdi) {
-        if (pdi.getImageUrl() == null || !pdi.getImageUrl().startsWith("http")) {
-            log.warn("No se procesará PdI sin URL válida: {}", pdi.getId());
+        String imageUrl = pdi.getImageUrl();
+        if (imageUrl == null || !imageUrl.startsWith("http")) {
+            log.warn("[ETIQUETADOR] Saltado PdI id={} por imageUrl inválida: {}", pdi.getId(), imageUrl);
             return null;
         }
 
-        List<String> etiquetas = client.procesarImagen(pdi.getImageUrl());
+        log.info("[ETIQUETADOR] Ejecutando sobre PdI id={} imageUrl={}", pdi.getId(), imageUrl);
+
+        long t0 = System.currentTimeMillis();
+        List<String> etiquetas = client.procesarImagen(imageUrl);
+        long dt = System.currentTimeMillis() - t0;
         String detalle = String.join(",", etiquetas);
 
-        log.info("Etiquetas detectadas para PdI {}: {}", pdi.getId(), detalle);
+        log.info("[ETIQUETADOR] Finalizado para PdI id={} en {} ms, etiquetas={} (cantidad={})",
+                pdi.getId(), dt, detalle, etiquetas.size());
         return new ResultadoAnalisis(tipo(), detalle, pdi);
     }
 }

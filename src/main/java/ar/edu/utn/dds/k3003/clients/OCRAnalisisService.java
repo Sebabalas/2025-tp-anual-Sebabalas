@@ -27,14 +27,19 @@ public class OCRAnalisisService implements AnalisisService {
     @Override
     public ResultadoAnalisis ejecutar(PdI pdi) {
         String imageUrl = pdi.getImageUrl();
-
         if (imageUrl == null || !imageUrl.startsWith("http") ||
             !(imageUrl.endsWith(".png") || imageUrl.endsWith(".jpg") || imageUrl.endsWith(".jpeg"))) {
-            log.warn("PdI sin URL válida o con extensión no reconocida: {}", pdi.getId());
+            log.warn("[OCR] Saltado PdI id={} por imageUrl inválida o extensión no permitida: {}", pdi.getId(), imageUrl);
             return null;
         }
 
+        log.info("[OCR] Ejecutando sobre PdI id={} imageUrl={}", pdi.getId(), imageUrl);
+        long t0 = System.currentTimeMillis();
         String texto = client.procesarImagen(imageUrl);
+        long dt = System.currentTimeMillis() - t0;
+        int len = texto == null ? 0 : texto.length();
+        String preview = texto == null ? null : (len > 200 ? texto.substring(0, 200) + "..." : texto);
+        log.info("[OCR] Finalizado para PdI id={} en {} ms, caracteres={} preview={}", pdi.getId(), dt, len, preview);
         return new ResultadoAnalisis(tipo(), texto, pdi);
     }
 }

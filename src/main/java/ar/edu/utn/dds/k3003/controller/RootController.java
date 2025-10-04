@@ -8,7 +8,7 @@ import java.util.Map;
 @RestController
 public class RootController {
 
-    private static final String BASE_URL = "https://two025-tp-anual-sebabalas.onrender.com";
+    private static final String BASE_URL = "https://tp-dds-procesador.onrender.com";
 
     @GetMapping("/")
     public Map<String, Object> home() {

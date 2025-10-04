@@ -17,7 +17,7 @@ public class ResultadoAnalisis {
 
     private String tipo;   // OCR, ETIQUETADOR, etc.
    
-    @Column(columnDefinition = "TEXT")
+    @Column(length = 255)
     private String detalle; // JSON, texto, lista serializada
 
     @ManyToOne
@@ -26,8 +26,17 @@ public class ResultadoAnalisis {
 
     public ResultadoAnalisis(String tipo, String detalle, PdI pdi) {
         this.tipo = tipo;
-        this.detalle = detalle;
+        this.detalle = trimDetalle(detalle);
         this.pdi = pdi;
+    }
+
+    public void setDetalle(String detalle) {
+        this.detalle = trimDetalle(detalle);
+    }
+
+    private String trimDetalle(String valor) {
+        if (valor == null) return null;
+        return valor.length() > 255 ? valor.substring(0, 255) : valor;
     }
 
 }

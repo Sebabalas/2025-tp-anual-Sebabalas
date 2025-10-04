@@ -49,7 +49,8 @@ public class Fachada implements FachadaProcesadorPdINueva {
 
     @Override
     public PdiDTONuevo procesar(PdiDTONuevo dto) {
-        log.info("Procesando PdI para hechoId={}", dto.hechoId());
+        log.info("Procesando PdI para hechoId={} descripcion={} lugar={} momento={} imageUrl={}",
+                dto.hechoId(), dto.descripcion(), dto.lugar(), dto.momento(), dto.imageUrl());
 
         PdI nuevoPdI = dtoAPDI(dto);
 
@@ -85,7 +86,12 @@ public class Fachada implements FachadaProcesadorPdINueva {
         }
 
          // 🚨 Llamada al Procesador de Análisis (OCR, etiquetas, etc.)
+        log.info("Invocando procesador de análisis para PdI (hechoId={})", nuevoPdI.getHechoId());
+        long t0Analisis = System.currentTimeMillis();
         procesadorAnalisis.procesarAnalisis(nuevoPdI);
+        long dtAnalisis = System.currentTimeMillis() - t0Analisis;
+        log.info("Procesador de análisis finalizado en {} ms para PdI (hechoId={}) con {} resultados",
+                dtAnalisis, nuevoPdI.getHechoId(), nuevoPdI.getResultados().size());
 
         PdI guardado = pdIRepository.save(nuevoPdI);
 
