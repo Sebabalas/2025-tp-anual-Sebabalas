@@ -1,7 +1,5 @@
 package ar.edu.utn.dds.k3003.model;
 
-import ar.edu.utn.dds.k3003.model.ResultadoAnalisis;
-
 import com.fasterxml.jackson.annotation.JsonFormat;
 
 import jakarta.persistence.*;
