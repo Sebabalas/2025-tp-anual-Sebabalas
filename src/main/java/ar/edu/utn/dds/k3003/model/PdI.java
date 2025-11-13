@@ -31,7 +31,18 @@ public class PdI {
     private String contenido;
     private String imageUrl = "";
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private EstadoPdi estado = EstadoPdi.PENDIENTE;
 
+    @Version
+    private Long version;
+
+    @Column(nullable = false)
+    private LocalDateTime createdAt;
+
+    @Column(nullable = false)
+    private LocalDateTime updatedAt;
 
     // resultados de análisis asociados
     @OneToMany(mappedBy = "pdi", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
@@ -49,5 +60,21 @@ public class PdI {
         this.momento = momento;
         this.contenido = contenido;
         this.imageUrl = imageUrl;
+        this.estado = EstadoPdi.PENDIENTE;
+    }
+
+    @PrePersist
+    public void prePersist() {
+        LocalDateTime now = LocalDateTime.now();
+        this.createdAt = now;
+        this.updatedAt = now;
+        if (this.estado == null) {
+            this.estado = EstadoPdi.PENDIENTE;
+        }
+    }
+
+    @PreUpdate
+    public void preUpdate() {
+        this.updatedAt = LocalDateTime.now();
     }
 }
