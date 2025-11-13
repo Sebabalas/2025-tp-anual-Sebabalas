@@ -3,7 +3,7 @@ package ar.edu.utn.dds.k3003.app.workers;
 import ar.edu.utn.dds.k3003.app.analisis.ProcesadorAnalisis;
 import ar.edu.utn.dds.k3003.model.EstadoPdi;
 import ar.edu.utn.dds.k3003.model.PdI;
-import ar.edu.utn.dds.k3003.repository.JpaPdIRepository;
+import ar.edu.utn.dds.k3003.repository.PdIRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -20,7 +20,7 @@ public class PdiWorker {
 
     private static final Logger log = LoggerFactory.getLogger(PdiWorker.class);
 
-    private final JpaPdIRepository pdiRepository;
+    private final PdIRepository pdiRepository;
     private final ProcesadorAnalisis procesadorAnalisis;
 
     @Value("${workers.pdi.enabled:true}")
@@ -29,7 +29,7 @@ public class PdiWorker {
     @Value("${workers.pdi.batch-size:5}")
     private int batchSize;
 
-    public PdiWorker(JpaPdIRepository pdiRepository, ProcesadorAnalisis procesadorAnalisis) {
+    public PdiWorker(PdIRepository pdiRepository, ProcesadorAnalisis procesadorAnalisis) {
         this.pdiRepository = pdiRepository;
         this.procesadorAnalisis = procesadorAnalisis;
     }
