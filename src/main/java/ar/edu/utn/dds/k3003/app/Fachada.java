@@ -13,6 +13,7 @@ import ar.edu.utn.dds.k3003.exceptions.dominio.pdi.HechoInactivoException;
 import ar.edu.utn.dds.k3003.exceptions.dominio.pdi.HechoInexistenteException;
 import ar.edu.utn.dds.k3003.exceptions.solicitudes.SolicitudesCommunicationException;
 
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -48,7 +49,7 @@ public class Fachada implements FachadaProcesadorPdINueva {
 
     @Override
     public PdiDTONuevo procesar(PdiDTONuevo dto) {
-        log.info("Procesando PdI (modo async) para hechoId={} descripcion={} lugar={} momento={} imageUrl={}",
+        log.info("Procesando PdI para hechoId={} descripcion={} lugar={} momento={} imageUrl={}",
                 dto.hechoId(), dto.descripcion(), dto.lugar(), dto.momento(), dto.imageUrl());
 
         PdI nuevoPdI = dtoAPDI(dto);
@@ -84,10 +85,17 @@ public class Fachada implements FachadaProcesadorPdINueva {
             throw new HechoInactivoException("El hecho no se encuentra activo");
         }
 
-        // Encolado: se guarda en estado PENDIENTE y un worker lo procesará
+         // 🚨 Llamada al Procesador de Análisis (OCR, etiquetas, etc.)
+        log.info("Invocando procesador de análisis para PdI (hechoId={})", nuevoPdI.getHechoId());
+        long t0Analisis = System.currentTimeMillis();
+        procesadorAnalisis.procesarAnalisis(nuevoPdI);
+        long dtAnalisis = System.currentTimeMillis() - t0Analisis;
+        log.info("Procesador de análisis finalizado en {} ms para PdI (hechoId={}) con {} resultados",
+                dtAnalisis, nuevoPdI.getHechoId(), nuevoPdI.getResultados().size());
+
         PdI guardado = pdIRepository.save(nuevoPdI);
 
-        log.info("PdI encolado con ID {} para hechoId: {}", guardado.getId(), guardado.getHechoId());
+        log.info("Se guardó el PdI con ID {} en hechoId: {}", guardado.getId(), guardado.getHechoId());
 
         return mapearADTO(guardado);
     }
