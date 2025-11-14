@@ -6,6 +6,7 @@ import ar.edu.utn.dds.k3003.clients.SolicitudesRestTemplateProxy;
 import ar.edu.utn.dds.k3003.repository.PdIRepository;
 import ar.edu.utn.dds.k3003.app.analisis.AnalisisService;
 import ar.edu.utn.dds.k3003.app.analisis.ProcesadorAnalisis;
+import ar.edu.utn.dds.k3003.app.messaging.PdiPublisher;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,9 +41,10 @@ public class FachadaConfig {
         PdIRepository repo,
         @Value("${solicitudes.base-url}") String baseUrl,
         @Qualifier("defaultRestTemplate") RestTemplate restTemplate,
-        ProcesadorAnalisis procesadorAnalisis
+        ProcesadorAnalisis procesadorAnalisis,
+        PdiPublisher pdiPublisher
     ) {
-        Fachada fachada = new Fachada(repo, new SolicitudesRestTemplateProxy(restTemplate, baseUrl), procesadorAnalisis);
+        Fachada fachada = new Fachada(repo, new SolicitudesRestTemplateProxy(restTemplate, baseUrl), procesadorAnalisis, pdiPublisher);
         return fachada;
     }
 }

@@ -7,6 +7,7 @@ import ar.edu.utn.dds.k3003.repository.PdIRepository;
 import ar.edu.utn.dds.k3003.facades.FachadaProcesadorPdINueva;
 import ar.edu.utn.dds.k3003.facades.FachadaSolicitudes;
 import ar.edu.utn.dds.k3003.app.analisis.ProcesadorAnalisis;
+import ar.edu.utn.dds.k3003.app.messaging.PdiPublisher;
 import ar.edu.utn.dds.k3003.dtos.PdiDTONuevo;
 import ar.edu.utn.dds.k3003.dtos.ResultadoAnalisisDTO;
 import ar.edu.utn.dds.k3003.exceptions.dominio.pdi.HechoInactivoException;
@@ -31,14 +32,16 @@ public class Fachada implements FachadaProcesadorPdINueva {
     private final PdIRepository pdIRepository;
     private FachadaSolicitudes fachadaSolicitudes;
     private final ProcesadorAnalisis procesadorAnalisis;
+    private final PdiPublisher pdiPublisher;
 
     private static final Logger log = LoggerFactory.getLogger(Fachada.class);
 
     @Autowired
-    public Fachada(PdIRepository pdiRepository, FachadaSolicitudes fachadaSolicitudes, ProcesadorAnalisis procesadorAnalisis) {
+    public Fachada(PdIRepository pdiRepository, FachadaSolicitudes fachadaSolicitudes, ProcesadorAnalisis procesadorAnalisis, PdiPublisher pdiPublisher) {
         this.pdIRepository = pdiRepository;
         this.fachadaSolicitudes = fachadaSolicitudes;
         this.procesadorAnalisis = procesadorAnalisis;
+        this.pdiPublisher = pdiPublisher;
 
     }
 
@@ -52,23 +55,19 @@ public class Fachada implements FachadaProcesadorPdINueva {
         log.info("Procesando PdI para hechoId={} descripcion={} lugar={} momento={} imageUrl={}",
                 dto.hechoId(), dto.descripcion(), dto.lugar(), dto.momento(), dto.imageUrl());
 
-        PdI nuevoPdI = dtoAPDI(dto);
-
-        Optional<PdI> PdIYaProcesado =
-                pdIRepository.findByHechoId(nuevoPdI.getHechoId()).stream()
-                        .filter(
-                                p ->
-                                        p.getDescripcion().equals(nuevoPdI.getDescripcion())
-                                                && p.getLugar().equals(nuevoPdI.getLugar())
-                                                && p.getMomento().equals(nuevoPdI.getMomento())
-                                                && p.getContenido().equals(nuevoPdI.getContenido()))
+        // Idempotencia rápida: evitar encolar duplicados exactos ya procesados
+        Optional<PdI> yaProcesado =
+                pdIRepository.findByHechoId(dto.hechoId()).stream()
+                        .filter(p ->
+                                equalsSafe(p.getDescripcion(), dto.descripcion()) &&
+                                equalsSafe(p.getLugar(), dto.lugar()) &&
+                                equalsSafe(p.getMomento(), dto.momento()) &&
+                                equalsSafe(p.getContenido(), dto.contenido()))
                         .findFirst();
-
-        if (PdIYaProcesado.isPresent()) {
+        if (yaProcesado.isPresent()) {
             log.info("El PdI con hechoId={} ya estaba procesado. Se devuelve el existente con id={}",
-                    nuevoPdI.getHechoId(),
-                    PdIYaProcesado.get().getId());
-            return mapearADTO(PdIYaProcesado.get());
+                    dto.hechoId(), yaProcesado.get().getId());
+            return mapearADTO(yaProcesado.get());
         }
 
         boolean activo;
@@ -85,19 +84,14 @@ public class Fachada implements FachadaProcesadorPdINueva {
             throw new HechoInactivoException("El hecho no se encuentra activo");
         }
 
-         // 🚨 Llamada al Procesador de Análisis (OCR, etiquetas, etc.)
-        log.info("Invocando procesador de análisis para PdI (hechoId={})", nuevoPdI.getHechoId());
-        long t0Analisis = System.currentTimeMillis();
-        procesadorAnalisis.procesarAnalisis(nuevoPdI);
-        long dtAnalisis = System.currentTimeMillis() - t0Analisis;
-        log.info("Procesador de análisis finalizado en {} ms para PdI (hechoId={}) con {} resultados",
-                dtAnalisis, nuevoPdI.getHechoId(), nuevoPdI.getResultados().size());
+        // Encolado asíncrono del DTO completo (worker lo procesa y persiste)
+        pdiPublisher.publish(dto);
+        log.info("PdI encolado (DTO) para procesamiento async. hechoId={}", dto.hechoId());
+        return dto;
+    }
 
-        PdI guardado = pdIRepository.save(nuevoPdI);
-
-        log.info("Se guardó el PdI con ID {} en hechoId: {}", guardado.getId(), guardado.getHechoId());
-
-        return mapearADTO(guardado);
+    private static boolean equalsSafe(Object a, Object b) {
+        return a == b || (a != null && a.equals(b));
     }
 
     @Override
