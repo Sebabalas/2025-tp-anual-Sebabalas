@@ -9,6 +9,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Service;
 
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
+
 import java.util.Optional;
 
 @Service
@@ -18,15 +21,19 @@ public class PdiWorker {
 
     private final PdIRepository pdiRepository;
     private final ProcesadorAnalisis procesadorAnalisis;
+    private final MeterRegistry meterRegistry;
 
-    public PdiWorker(PdIRepository pdiRepository, ProcesadorAnalisis procesadorAnalisis) {
+    public PdiWorker(PdIRepository pdiRepository, ProcesadorAnalisis procesadorAnalisis, MeterRegistry meterRegistry) {
         this.pdiRepository = pdiRepository;
         this.procesadorAnalisis = procesadorAnalisis;
+        this.meterRegistry = meterRegistry;
     }
 
     @RabbitListener(queues = "${amqp.pdi.queue}")
     public void onMessage(PdiDTONuevo dto) {
         log.info("[WORKER] Recibido PdI DTO hechoId={} desc={} lugar={}", dto.hechoId(), dto.descripcion(), dto.lugar());
+        Timer.Sample sample = Timer.start(meterRegistry);
+        String outcome = "success";
 
         Optional<PdI> existente = pdiRepository.findByHechoId(dto.hechoId()).stream()
                 .filter(p ->
@@ -37,6 +44,13 @@ public class PdiWorker {
                 .findFirst();
         if (existente.isPresent()) {
             log.info("[WORKER] PdI ya existente, se omite. id={}", existente.get().getId());
+            sample.stop(
+                Timer.builder("pdi.processing.duration")
+                    .description("Tiempo total de procesamiento de un PdI")
+                    .tag("source", "amqp")
+                    .tag("outcome", "duplicate")
+                    .register(meterRegistry)
+            );
             return;
         }
 
@@ -56,7 +70,16 @@ public class PdiWorker {
                     guardado.getResultados().size());
         } catch (Exception ex) {
             log.error("[WORKER] Error procesando PdI hechoId={}: {}", dto.hechoId(), ex.getMessage(), ex);
+            outcome = "error";
             throw ex;
+        } finally {
+            sample.stop(
+                Timer.builder("pdi.processing.duration")
+                    .description("Tiempo total de procesamiento de un PdI")
+                    .tag("source", "amqp")
+                    .tag("outcome", outcome)
+                    .register(meterRegistry)
+            );
         }
     }
 
