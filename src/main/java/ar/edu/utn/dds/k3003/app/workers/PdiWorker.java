@@ -44,6 +44,10 @@ public class PdiWorker {
                 .findFirst();
         if (existente.isPresent()) {
             log.info("[WORKER] PdI ya existente, se omite. id={}", existente.get().getId());
+            
+            // Incrementar contador de duplicados
+            meterRegistry.counter("pdi.procesados", "outcome", "duplicate").increment();
+            
             sample.stop(
                 Timer.builder("pdi.processing.duration")
                     .description("Tiempo total de procesamiento de un PdI")
@@ -68,9 +72,16 @@ public class PdiWorker {
             PdI guardado = pdiRepository.save(pdi);
             log.info("[WORKER] Procesado y guardado PdI id={} con {} resultados", guardado.getId(),
                     guardado.getResultados().size());
+            
+            // Incrementar contador de éxito
+            meterRegistry.counter("pdi.procesados", "outcome", "success").increment();
         } catch (Exception ex) {
             log.error("[WORKER] Error procesando PdI hechoId={}: {}", dto.hechoId(), ex.getMessage(), ex);
             outcome = "error";
+            
+            // Incrementar contador de errores
+            meterRegistry.counter("pdi.procesados", "outcome", "error").increment();
+            
             throw ex;
         } finally {
             sample.stop(
